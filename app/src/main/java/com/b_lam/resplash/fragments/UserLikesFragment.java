@@ -6,12 +6,12 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.util.Pair;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.util.Pair;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,10 +27,10 @@ import com.b_lam.resplash.data.data.Photo;
 import com.b_lam.resplash.data.data.User;
 import com.b_lam.resplash.data.service.PhotoService;
 import com.google.gson.Gson;
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.adapters.FooterAdapter;
+import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.fastadapter_extensions.items.ProgressItem;
 import com.mikepenz.fastadapter_extensions.scroll.EndlessRecyclerOnScrollListener;
 
@@ -52,7 +52,7 @@ public class UserLikesFragment extends Fragment {
     private SwipeRefreshLayout mSwipeContainer;
     private ProgressBar mImagesProgress;
     private ErrorView mImagesErrorView;
-    private FooterAdapter<ProgressItem> mFooterAdapter;
+    private ItemAdapter mFooterAdapter;
     private int mPage, mColumns;
     private String mSort;
     private User mUser;
@@ -109,14 +109,16 @@ public class UserLikesFragment extends Fragment {
                 return false;
             }
         });
-        mImageRecycler.setItemViewCacheSize(20);
+        mImageRecycler.setItemViewCacheSize(5);
         mPhotoAdapter = new FastItemAdapter<>();
 
         mPhotoAdapter.withOnClickListener(onClickListener);
 
-        mFooterAdapter = new FooterAdapter<>();
+        mFooterAdapter = new ItemAdapter();
 
-        mImageRecycler.setAdapter(mFooterAdapter.wrap(mPhotoAdapter));
+        mPhotoAdapter.addAdapter(1, mFooterAdapter);
+
+        mImageRecycler.setAdapter(mPhotoAdapter);
 
         mImageRecycler.addOnScrollListener(new EndlessRecyclerOnScrollListener(mFooterAdapter) {
             @Override
@@ -146,7 +148,7 @@ public class UserLikesFragment extends Fragment {
         }
     }
 
-    private FastAdapter.OnClickListener<Photo> onClickListener = new FastAdapter.OnClickListener<Photo>(){
+    private OnClickListener<Photo> onClickListener = new OnClickListener<Photo>(){
         @Override
         public boolean onClick(View v, IAdapter<Photo> adapter, Photo item, int position) {
             Intent i = new Intent(getContext(), DetailActivity.class);
@@ -192,39 +194,51 @@ public class UserLikesFragment extends Fragment {
         PhotoService.OnRequestPhotosListener mPhotoRequestListener = new PhotoService.OnRequestPhotosListener() {
             @Override
             public void onRequestPhotosSuccess(Call<List<Photo>> call, Response<List<Photo>> response) {
-                Log.d(TAG, String.valueOf(response.code()));
-                if(response.code() == 200) {
-                    mPhotos = response.body();
-                    mFooterAdapter.clear();
-                    UserLikesFragment.this.updateAdapter(mPhotos);
-                    mPage++;
-                    mImagesProgress.setVisibility(View.GONE);
-                    mImageRecycler.setVisibility(View.VISIBLE);
-                    mImagesErrorView.setVisibility(View.GONE);
-                }else{
-                    mImagesErrorView.setTitle(R.string.error_http);
-                    mImagesErrorView.setSubtitle(R.string.error_http_subtitle);
-                    mImagesProgress.setVisibility(View.GONE);
-                    mImageRecycler.setVisibility(View.GONE);
-                    mImagesErrorView.setVisibility(View.VISIBLE);
+                if (isAdded()) {
+                    Log.d(TAG, String.valueOf(response.code()));
+                    if (response.code() == 200) {
+                        mPhotos = response.body();
+                        mFooterAdapter.clear();
+                        UserLikesFragment.this.updateAdapter(mPhotos);
+                        mPage++;
+                        mImagesProgress.setVisibility(View.GONE);
+                        mImageRecycler.setVisibility(View.VISIBLE);
+                        mImagesErrorView.setVisibility(View.GONE);
+                    } else {
+                        mImagesErrorView.setTitle(R.string.error_http);
+                        mImagesErrorView.setSubtitle(R.string.error_http_subtitle);
+                        mImagesProgress.setVisibility(View.GONE);
+                        mImageRecycler.setVisibility(View.GONE);
+                        mImagesErrorView.setVisibility(View.VISIBLE);
+                    }
                 }
             }
 
             @Override
             public void onRequestPhotosFailed(Call<List<Photo>> call, Throwable t) {
-                Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
-                mImagesErrorView.setTitle(R.string.error_network);
-                mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
-                mImagesProgress.setVisibility(View.GONE);
-                mImageRecycler.setVisibility(View.GONE);
-                mImagesErrorView.setVisibility(View.VISIBLE);
-                mSwipeContainer.setRefreshing(false);
+                if (isAdded()) {
+                    Log.d(TAG, t.toString());
+                    mImagesErrorView.setRetryVisible(false);
+                    mImagesErrorView.setTitle(R.string.error_network);
+                    mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
+                    mImagesProgress.setVisibility(View.GONE);
+                    mImageRecycler.setVisibility(View.GONE);
+                    mImagesErrorView.setVisibility(View.VISIBLE);
+                    mSwipeContainer.setRefreshing(false);
+                }
             }
         };
 
-        mService.requestUserLikes(mUser, mPage, Resplash.DEFAULT_PER_PAGE, mSort, mPhotoRequestListener);
-
+        if (mUser != null) {
+            mService.requestUserLikes(mUser, mPage, Resplash.DEFAULT_PER_PAGE, mSort, mPhotoRequestListener);
+        } else {
+            mImagesErrorView.setRetryVisible(false);
+            mImagesErrorView.setSubtitle(R.string.failed_to_load_profile);
+            mImagesProgress.setVisibility(View.GONE);
+            mImageRecycler.setVisibility(View.GONE);
+            mImagesErrorView.setVisibility(View.VISIBLE);
+            mSwipeContainer.setRefreshing(false);
+        }
     }
 
     public void fetchNew(){
@@ -239,43 +253,55 @@ public class UserLikesFragment extends Fragment {
         PhotoService.OnRequestPhotosListener mPhotoRequestListener = new PhotoService.OnRequestPhotosListener() {
             @Override
             public void onRequestPhotosSuccess(Call<List<Photo>> call, Response<List<Photo>> response) {
-                Log.d(TAG, String.valueOf(response.code()));
-                if(response.code() == 200) {
-                    mPhotos = response.body();
-                    mPhotoAdapter.clear();
-                    UserLikesFragment.this.updateAdapter(mPhotos);
-                    mPage++;
-                    mImagesProgress.setVisibility(View.GONE);
-                    mImageRecycler.setVisibility(View.VISIBLE);
-                    mImagesErrorView.setVisibility(View.GONE);
-                }else{
-                    mImagesErrorView.setTitle(R.string.error_http);
-                    mImagesErrorView.setSubtitle(R.string.error_http_subtitle);
-                    mImagesProgress.setVisibility(View.GONE);
-                    mImageRecycler.setVisibility(View.GONE);
-                    mImagesErrorView.setVisibility(View.VISIBLE);
-                }
-                if(mSwipeContainer.isRefreshing()) {
-                    Toast.makeText(getContext(), "Updated images!", Toast.LENGTH_SHORT).show();
-                    mSwipeContainer.setRefreshing(false);
+                if (isAdded()) {
+                    Log.d(TAG, String.valueOf(response.code()));
+                    if (response.code() == 200) {
+                        mPhotos = response.body();
+                        mPhotoAdapter.clear();
+                        UserLikesFragment.this.updateAdapter(mPhotos);
+                        mPage++;
+                        mImagesProgress.setVisibility(View.GONE);
+                        mImageRecycler.setVisibility(View.VISIBLE);
+                        mImagesErrorView.setVisibility(View.GONE);
+                    } else {
+                        mImagesErrorView.setTitle(R.string.error_http);
+                        mImagesErrorView.setSubtitle(R.string.error_http_subtitle);
+                        mImagesProgress.setVisibility(View.GONE);
+                        mImageRecycler.setVisibility(View.GONE);
+                        mImagesErrorView.setVisibility(View.VISIBLE);
+                    }
+                    if (mSwipeContainer.isRefreshing()) {
+                        Toast.makeText(getContext(), getString(R.string.updated_photos), Toast.LENGTH_SHORT).show();
+                        mSwipeContainer.setRefreshing(false);
+                    }
                 }
             }
 
             @Override
             public void onRequestPhotosFailed(Call<List<Photo>> call, Throwable t) {
-                Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
-                mImagesErrorView.setTitle(R.string.error_network);
-                mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
-                mImagesProgress.setVisibility(View.GONE);
-                mImageRecycler.setVisibility(View.GONE);
-                mImagesErrorView.setVisibility(View.VISIBLE);
-                mSwipeContainer.setRefreshing(false);
+                if (isAdded()) {
+                    Log.d(TAG, t.toString());
+                    mImagesErrorView.setRetryVisible(false);
+                    mImagesErrorView.setTitle(R.string.error_network);
+                    mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
+                    mImagesProgress.setVisibility(View.GONE);
+                    mImageRecycler.setVisibility(View.GONE);
+                    mImagesErrorView.setVisibility(View.VISIBLE);
+                    mSwipeContainer.setRefreshing(false);
+                }
             }
         };
 
-        mService.requestUserLikes(mUser, mPage, Resplash.DEFAULT_PER_PAGE, mSort, mPhotoRequestListener);
-
+        if (mUser != null) {
+            mService.requestUserLikes(mUser, mPage, Resplash.DEFAULT_PER_PAGE, mSort, mPhotoRequestListener);
+        } else {
+            mImagesErrorView.setRetryVisible(false);
+            mImagesErrorView.setSubtitle(R.string.failed_to_load_profile);
+            mImagesProgress.setVisibility(View.GONE);
+            mImageRecycler.setVisibility(View.GONE);
+            mImagesErrorView.setVisibility(View.VISIBLE);
+            mSwipeContainer.setRefreshing(false);
+        }
     }
 
     public void setUser(User user){

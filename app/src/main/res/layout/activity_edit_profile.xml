@@ -9,23 +9,20 @@
     tools:context="com.b_lam.resplash.activities.EditProfileActivity"
     tools:ignore="MissingPrefix">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/AppTheme.AppBarOverlay">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar_edit_profile"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay"
+            style="@style/ResplashToolbarTheme"
             app:layout_scrollFlags="scroll"/>
 
-    </android.support.design.widget.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
-    <android.support.v4.widget.NestedScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -34,21 +31,22 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="10dp"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_account_card_details"
-                    app:ico_size="20dp"
+                    android:src="?attr/accountCardIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/username_edit_text"
                     style="@style/edit_profile_edit_text"
-                    android:hint="Username" />
+                    android:hint="@string/username_hint" />
 
             </LinearLayout>
 
@@ -57,21 +55,20 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_account_circle"
-                    app:ico_size="20dp"
+                    android:src="?attr/profileIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/first_name_edit_text"
                     style="@style/edit_profile_edit_text"
                     android:inputType="textPersonName"
-                    android:hint="First name" />
+                    android:hint="@string/first_name_hint" />
 
             </LinearLayout>
 
@@ -80,21 +77,20 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_account_circle"
-                    app:ico_size="20dp"
+                    android:src="?attr/profileIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/last_name_edit_text"
                     style="@style/edit_profile_edit_text"
                     android:inputType="textPersonName"
-                    android:hint="Last name" />
+                    android:hint="@string/last_name_hint" />
 
             </LinearLayout>
 
@@ -103,21 +99,20 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_email_outline"
-                    app:ico_size="20dp"
+                    android:src="?attr/emailIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/email_edit_text"
                     style="@style/edit_profile_edit_text"
                     android:inputType="textEmailAddress"
-                    android:hint="Email address" />
+                    android:hint="@string/email_address_hint" />
 
             </LinearLayout>
 
@@ -126,20 +121,19 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_compass_outline"
-                    app:ico_size="20dp"
+                    android:src="?attr/exploreIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/portfolio_edit_text"
                     style="@style/edit_profile_edit_text"
-                    android:hint="Personal site/portfolio" />
+                    android:hint="@string/personal_site_hint" />
 
             </LinearLayout>
 
@@ -148,20 +142,19 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_instagram"
-                    app:ico_size="20dp"
+                    android:src="?attr/instagramIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/instagram_edit_text"
                     style="@style/edit_profile_edit_text"
-                    android:hint="Instagram username" />
+                    android:hint="@string/instagram_username_hint" />
 
             </LinearLayout>
 
@@ -170,20 +163,19 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="gmd_location_on"
-                    app:ico_size="20dp"
+                    android:src="?attr/locationIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/location_edit_text"
                     style="@style/edit_profile_edit_text"
-                    android:hint="Location" />
+                    android:hint="@string/location_hint" />
 
             </LinearLayout>
 
@@ -192,36 +184,34 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/Link_Water" />
+                android:background="?attr/dividerColor" />
 
             <LinearLayout
                 style="@style/about_entry">
 
                 <ImageView
-                    app:ico_icon="cmd_format_quote"
-                    app:ico_size="20dp"
+                    android:src="?attr/quoteIcon"
                     style="@style/material_icon" />
 
                 <EditText
                     android:id="@+id/bio_edit_text"
                     style="@style/edit_profile_edit_text"
                     android:inputType="textMultiLine"
-                    android:hint="Bio" />
+                    android:hint="@string/bio_hint" />
 
             </LinearLayout>
 
             <Button
                 android:id="@+id/save_edit_button"
-                android:text="Save"
+                android:text="@string/save"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:layout_marginBottom="20dp"
-                android:backgroundTint="@color/colorAccent"
-                android:textColor="@color/md_white_1000" />
+                android:theme="@style/ResplashButtonTheme" />
 
         </LinearLayout>
 
-    </android.support.v4.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

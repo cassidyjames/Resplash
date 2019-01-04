@@ -3,22 +3,18 @@ package com.b_lam.resplash.data.data;
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.b_lam.resplash.Resplash;
+import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.ViewPropertyAnimation;
+import com.bumptech.glide.request.transition.ViewPropertyTransition;
 import com.google.gson.annotations.SerializedName;
 import com.mikepenz.fastadapter.items.AbstractItem;
-import com.mikepenz.fastadapter.utils.ViewHolderFactory;
-
 import java.util.List;
-
 import com.b_lam.resplash.R;
 
 /**
@@ -173,6 +169,7 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
             public String self;
             public String html;
             public String download;
+            public String download_location;
         }
 
         public static class Categories {
@@ -248,7 +245,7 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
             case "Grid":
                 return R.id.item_collection;
             default:
-                throw new IllegalArgumentException("Invalid item layout");
+                return R.id.item_collection;
         }
     }
 
@@ -264,7 +261,7 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
             case "Grid":
                 return R.layout.item_collection;
             default:
-                throw new IllegalArgumentException("Invalid item layout");
+                return R.layout.item_collection;
         }    }
 
     @Override
@@ -274,7 +271,7 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
         String url;
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Resplash.getInstance());
 
-        if(this.cover_photo != null) {
+        if (this.cover_photo != null && this.cover_photo.urls != null) {
             switch (sharedPreferences.getString("load_quality", "Regular")) {
                 case "Raw":
                     url = this.cover_photo.urls.raw;
@@ -292,16 +289,15 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
                     url = this.cover_photo.urls.thumb;
                     break;
                 default:
-                    throw new IllegalArgumentException("Invalid load quality");
+                    url = this.cover_photo.urls.regular;
             }
 
             DisplayMetrics displaymetrics = Resplash.getInstance().getResources().getDisplayMetrics();
             float finalHeight = displaymetrics.widthPixels / ((float)cover_photo.width/(float)cover_photo.height);
 
-            ViewPropertyAnimation.Animator fadeAnimation = new ViewPropertyAnimation.Animator() {
+            ViewPropertyTransition.Animator fadeAnimation = new ViewPropertyTransition.Animator() {
                 @Override
                 public void animate(View view) {
-                    view.setAlpha(0f);
                     ObjectAnimator fadeAnim = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
                     fadeAnim.setDuration(500);
                     fadeAnim.start();
@@ -311,29 +307,34 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
             if(sharedPreferences.getString("item_layout", "List").equals("Cards")){
                 Glide.with(holder.itemView.getContext())
                         .load(url)
-                        .animate(fadeAnimation)
-                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .transition(GenericTransitionOptions.with(fadeAnimation))
                         .into(holder.coverPhotoCard);
                 holder.coverPhotoCard.setMinimumHeight((int) finalHeight);
             }else{
                 Glide.with(holder.itemView.getContext())
                         .load(url)
-                        .animate(fadeAnimation)
-                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .transition(GenericTransitionOptions.with(fadeAnimation))
                         .into(holder.coverPhoto);
                 holder.coverPhoto.setMinimumHeight((int) finalHeight);
             }
-        }else{
+        }else if(holder.coverPhotoCard != null){
+            holder.coverPhotoCard.setImageResource(R.drawable.placeholder);
+        }else if(holder.coverPhoto != null){
             holder.coverPhoto.setImageResource(R.drawable.placeholder);
         }
 
         if(sharedPreferences.getString("item_layout", "List").equals("Cards")){
             holder.collectionNameCard.setText(this.title);
-            holder.collectionSizeCard.setText(this.total_photos + " Photos");
+            holder.collectionSizeCard.setText(Resplash.getInstance().getResources().getString(R.string.photos, String.valueOf(this.total_photos)));
         }else{
             holder.collectionName.setText(this.title);
-            holder.collectionSize.setText(this.total_photos + " Photos");
+            holder.collectionSize.setText((Resplash.getInstance().getResources().getString(R.string.photos, String.valueOf(this.total_photos))));
         }
+    }
+
+    @Override
+    public ViewHolder getViewHolder(View v) {
+        return new ViewHolder(v);
     }
 
     // Manually create the ViewHolder class
@@ -356,29 +357,5 @@ public class Collection extends AbstractItem<Collection, Collection.ViewHolder> 
                 collectionSize = (TextView) itemView.findViewById(R.id.item_collection_size);
             }
         }
-    }
-
-    //the static ViewHolderFactory which will be used to generate the ViewHolder for this Item
-    private static final ViewHolderFactory<? extends Collection.ViewHolder> FACTORY = new Collection.ItemFactory();
-
-    /**
-     * our ItemFactory implementation which creates the ViewHolder for our adapter.
-     * It is highly recommended to implement a ViewHolderFactory as it is 0-1ms faster for ViewHolder creation,
-     * and it is also many many times more efficient if you define custom listeners on views within your item.
-     */
-    protected static class ItemFactory implements ViewHolderFactory<Collection.ViewHolder> {
-        public Collection.ViewHolder create(View v) {
-            return new Collection.ViewHolder(v);
-        }
-    }
-
-    /**
-     * return our ViewHolderFactory implementation here
-     *
-     * @return
-     */
-    @Override
-    public ViewHolderFactory<? extends Collection.ViewHolder> getFactory() {
-        return FACTORY;
     }
 }

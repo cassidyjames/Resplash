@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_preview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_grey_900"
+    android:background="?attr/previewBackgroundColor"
     tools:context="com.b_lam.resplash.activities.PreviewActivity">
 
     <ProgressBar
@@ -12,13 +12,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:scaleX="0.5"
-        android:scaleY="0.5"
-        style="?android:progressBarStyleLarge"/>
+        android:scaleX="0.75"
+        android:scaleY="0.75" />
 
-    <uk.co.senab.photoview.PhotoView
+    <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/preview_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-</android.support.design.widget.CoordinatorLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

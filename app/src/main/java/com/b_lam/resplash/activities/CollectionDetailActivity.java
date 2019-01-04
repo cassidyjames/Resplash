@@ -2,20 +2,20 @@ package com.b_lam.resplash.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.util.Pair;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.util.Pair;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,12 +31,14 @@ import com.b_lam.resplash.Resplash;
 import com.b_lam.resplash.data.data.Collection;
 import com.b_lam.resplash.data.data.Photo;
 import com.b_lam.resplash.data.service.PhotoService;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.adapters.FooterAdapter;
+import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.fastadapter_extensions.items.ProgressItem;
 import com.mikepenz.fastadapter_extensions.scroll.EndlessRecyclerOnScrollListener;
 
@@ -66,7 +68,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
     private FastItemAdapter<Photo> mPhotoAdapter;
     private List<Photo> mPhotos;
     private List<Photo> mCurrentPhotos;
-    private FooterAdapter<ProgressItem> mFooterAdapter;
+    private ItemAdapter mFooterAdapter;
     private int mPage, mColumns;
     private PhotoService.OnRequestPhotosListener mPhotosRequestListener;
     private String mLayoutType;
@@ -75,14 +77,28 @@ public class CollectionDetailActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.CollectionDetailActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.CollectionDetailActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_collection_detail);
 
         ButterKnife.bind(this);
 
         setSupportActionBar(mToolbar);
         Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_material, getTheme());
-        upArrow.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+        upArrow.setColorFilter(ThemeUtils.getThemeAttrColor(this, R.attr.menuIconColor), PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -98,7 +114,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
         }else{
             mCollectionDescription.setVisibility(View.GONE);
         }
-        mUserCollection.setText("By " + mCollection.user.name);
+        mUserCollection.setText(getString(R.string.by_author, mCollection.user.name));
         Glide.with(CollectionDetailActivity.this).load(mCollection.user.profile_image.medium).into(mUserProfilePicture);
 
         mUserProfilePicture.setOnClickListener(userProfileOnClickListener);
@@ -126,15 +142,17 @@ public class CollectionDetailActivity extends AppCompatActivity {
 
         mPhotoAdapter.withOnClickListener(onClickListener);
 
-        mFooterAdapter = new FooterAdapter<>();
+        mFooterAdapter = new ItemAdapter<>();
 
-        mImageRecycler.setAdapter(mFooterAdapter.wrap(mPhotoAdapter));
+        mPhotoAdapter.addAdapter(1, mFooterAdapter);
+
+        mImageRecycler.setAdapter(mPhotoAdapter);
 
         mImageRecycler.addOnScrollListener(new EndlessRecyclerOnScrollListener(mFooterAdapter) {
             @Override
             public void onLoadMore(int currentPage) {
                 if(mPhotoAdapter.getItemCount() >= mCollection.total_photos){
-                    Toast.makeText(Resplash.getInstance().getApplicationContext(), "No more photos", Toast.LENGTH_LONG);
+                    Toast.makeText(Resplash.getInstance().getApplicationContext(), getString(R.string.no_more_photos), Toast.LENGTH_LONG);
                 }else {
                     mFooterAdapter.clear();
                     mFooterAdapter.add(new ProgressItem().withEnabled(false));
@@ -153,7 +171,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
         loadMore();
     }
 
-    private FastAdapter.OnClickListener<Photo> onClickListener = new FastAdapter.OnClickListener<Photo>(){
+    private OnClickListener<Photo> onClickListener = new OnClickListener<Photo>(){
         @Override
         public boolean onClick(View v, IAdapter<Photo> adapter, Photo item, int position) {
             Intent i = new Intent(getApplicationContext(), DetailActivity.class);
@@ -216,7 +234,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
                     mImagesErrorView.setVisibility(View.VISIBLE);
                 }
                 if(mSwipeContainer.isRefreshing()) {
-                    Toast.makeText(getApplicationContext(), "Updated photos!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.updated_photos), Toast.LENGTH_SHORT).show();
                     mSwipeContainer.setRefreshing(false);
                 }
             }
@@ -224,7 +242,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
             @Override
             public void onRequestPhotosFailed(Call<List<Photo>> call, Throwable t) {
                 Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
+                mImagesErrorView.setRetryVisible(false);
                 mImagesErrorView.setTitle(R.string.error_network);
                 mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
                 mImagesProgress.setVisibility(View.GONE);
@@ -258,8 +276,11 @@ public class CollectionDetailActivity extends AppCompatActivity {
                 shareTextUrl();
                 return true;
             case R.id.action_view_on_unsplash:
-                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(mCollection.links.html));
-                startActivity(i);
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mCollection.links.html + Resplash.UNSPLASH_UTM_PARAMETERS));
+                if (intent.resolveActivity(getPackageManager()) != null)
+                    startActivity(intent);
+                else
+                    Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -290,10 +311,10 @@ public class CollectionDetailActivity extends AppCompatActivity {
             share.setType("text/plain");
             share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-            share.putExtra(Intent.EXTRA_SUBJECT, "Unsplash Collection");
-            share.putExtra(Intent.EXTRA_TEXT, mCollection.links.html);
+            share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.unsplash_collection));
+            share.putExtra(Intent.EXTRA_TEXT, mCollection.links.html + Resplash.UNSPLASH_UTM_PARAMETERS);
 
-            startActivity(Intent.createChooser(share, "Share via"));
+            startActivity(Intent.createChooser(share, getString(R.string.share_via)));
         }
     }
 }

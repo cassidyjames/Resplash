@@ -1,34 +1,26 @@
 package com.b_lam.resplash.activities;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
-import android.transition.Fade;
-import android.transition.Transition;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -37,8 +29,11 @@ import com.b_lam.resplash.data.tools.AuthManager;
 import com.b_lam.resplash.fragments.CollectionFragment;
 import com.b_lam.resplash.fragments.FeaturedFragment;
 import com.b_lam.resplash.fragments.NewFragment;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
+import com.b_lam.resplash.util.Utils;
 import com.bumptech.glide.Glide;
-import com.mikepenz.community_material_typeface_library.CommunityMaterial;
+import com.bumptech.glide.request.RequestOptions;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -73,12 +68,26 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
     private AccountHeader drawerHeader = null;
     private ProfileSettingDrawerItem drawerItemAddAccount, drawerItemViewProfile, drawerItemManageAccount, drawerItemLogout;
     private IProfile profile;
-    private final IProfile profileDefault = new ProfileDrawerItem().withName("Resplash").withEmail("Free high-resolution photos").withIcon(R.drawable.intro_icon_image);
+    private IProfile profileDefault;
     private MenuItem mItemFeaturedLatest, mItemFeaturedOldest, mItemFeaturedPopular, mItemNewLatest, mItemNewOldest, mItemNewPopular, mItemAll, mItemCurated, mItemFeatured;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.MainActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.MainActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
@@ -105,17 +114,25 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
             }
         }).start();
 
-        isStoragePermissionGranted();
+        Utils.isStoragePermissionGranted(this);
+
+        profileDefault = new ProfileDrawerItem().withName("Resplash").withEmail(getString(R.string.main_unsplash_description)).withIcon(R.drawable.intro_icon_image);
 
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
-            public void set(ImageView imageView, Uri uri, Drawable placeholder) {
-                Glide.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
+            public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
+                Glide.with(getApplicationContext())
+                        .load(uri)
+                        .apply(new RequestOptions()
+                                .placeholder(placeholder))
+                        .into(imageView);
             }
 
             @Override
             public void cancel(ImageView imageView) {
-                Glide.clear(imageView);
+                if (!isFinishing()) {
+                    Glide.with(getApplicationContext()).clear(imageView);
+                }
             }
 
             @Override
@@ -123,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
                 if (DrawerImageLoader.Tags.PROFILE.name().equals(tag)) {
                     return DrawerUIUtils.getPlaceHolder(ctx);
                 } else if (DrawerImageLoader.Tags.ACCOUNT_HEADER.name().equals(tag)) {
-                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(com.mikepenz.materialdrawer.R.color.primary).sizeDp(56);
+                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.primary_light).sizeDp(56);
                 } else if ("customUrlItem".equals(tag)) {
                     return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.md_red_500).sizeDp(56);
                 }
@@ -131,18 +148,17 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
             }
         });
 
-        drawerItemAddAccount = new ProfileSettingDrawerItem().withName("Add Account").withDescription("Add new Unsplash Account").withIcon(new IconicsDrawable(this, CommunityMaterial.Icon.cmd_plus).actionBar().paddingDp(5)).withIdentifier(100000).withOnDrawerItemClickListener(drawerItemClickListener);
-        drawerItemViewProfile = new ProfileSettingDrawerItem().withName("View Profile").withIcon(new IconicsDrawable(this, CommunityMaterial.Icon.cmd_account).paddingDp(4)).withIdentifier(100001).withOnDrawerItemClickListener(drawerItemClickListener);
-        drawerItemManageAccount = new ProfileSettingDrawerItem().withName("Manage Account").withIcon(new IconicsDrawable(this, CommunityMaterial.Icon.cmd_settings).paddingDp(4)).withIdentifier(100002).withOnDrawerItemClickListener(drawerItemClickListener);
-        drawerItemLogout = new ProfileSettingDrawerItem().withName("Logout").withIcon(new IconicsDrawable(this, CommunityMaterial.Icon.cmd_close_circle_outline).paddingDp(4)).withIdentifier(100003).withOnDrawerItemClickListener(drawerItemClickListener);
+        drawerItemAddAccount = new ProfileSettingDrawerItem().withName(getString(R.string.main_add_account)).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.addIcon)).withIdentifier(100000).withOnDrawerItemClickListener(drawerItemClickListener).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor));
+        drawerItemViewProfile = new ProfileSettingDrawerItem().withName(getString(R.string.main_view_profile)).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.profileIcon)).withIdentifier(100001).withOnDrawerItemClickListener(drawerItemClickListener).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor));
+        drawerItemManageAccount = new ProfileSettingDrawerItem().withName(getString(R.string.main_manage_account)).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.settingsIcon)).withIdentifier(100002).withOnDrawerItemClickListener(drawerItemClickListener).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor));
+        drawerItemLogout = new ProfileSettingDrawerItem().withName(getString(R.string.main_logout)).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.cancelIcon)).withIdentifier(100003).withOnDrawerItemClickListener(drawerItemClickListener).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor));
 
         // Create the AccountHeader
         drawerHeader = new AccountHeaderBuilder()
                 .withActivity(this)
                 .withTranslucentStatusBar(true)
-                .withTextColorRes(R.color.colorText)
+                .withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor))
                 .withProfileImagesClickable(false)
-                .withHeaderBackground(R.color.md_white_1000)
                 .withCurrentProfileHiddenInList(true)
                 .withSavedInstance(savedInstanceState)
                 .build();
@@ -157,13 +173,13 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
                 .withDelayDrawerClickEvent(200)
                 .withAccountHeader(drawerHeader)
                 .addDrawerItems(
-                        new PrimaryDrawerItem().withName("Featured").withIdentifier(1).withIcon(getDrawable(R.drawable.ic_whatshot_black_24dp)),
-                        new PrimaryDrawerItem().withName("New").withIdentifier(2).withIcon(getDrawable(R.drawable.ic_trending_up_black_24dp)),
-                        new PrimaryDrawerItem().withName("Collections").withIdentifier(3).withIcon(getDrawable(R.drawable.ic_collections_black_24dp)),
+                        new PrimaryDrawerItem().withName(getString(R.string.main_new)).withIdentifier(1).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.newIcon)).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)).withSelectedTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)),
+                        new PrimaryDrawerItem().withName(getString(R.string.main_featured)).withIdentifier(2).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.hotIcon)).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)).withSelectedTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)),
+                        new PrimaryDrawerItem().withName(getString(R.string.main_collections)).withIdentifier(3).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.collectionsIcon)).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)).withSelectedTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)),
                         new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName("Settings").withIdentifier(4).withIcon(getDrawable(R.drawable.ic_settings_black_24dp)).withSelectable(false),
-                        new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName("About").withIdentifier(5).withIcon(new IconicsDrawable(this).icon(CommunityMaterial.Icon.cmd_information_outline).sizeDp(24).paddingDp(2)).withSelectable(false)
+                        new PrimaryDrawerItem().withName(getString(R.string.main_support_development)).withIdentifier(4).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.heartIcon)).withSelectable(false).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)),
+                        new PrimaryDrawerItem().withName(getString(R.string.main_settings)).withIdentifier(5).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.settingsIcon)).withSelectable(false).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor)),
+                        new PrimaryDrawerItem().withName(getString(R.string.main_about)).withIdentifier(6).withIcon(ThemeUtils.getThemeAttrDrawable(this, R.attr.infoIcon)).withSelectable(false).withTextColor(ThemeUtils.getThemeAttrColor(this, R.attr.primaryTextColor))
                 )
                 .withOnDrawerItemClickListener(drawerItemClickListener)
                 .build();
@@ -171,9 +187,9 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
         drawer.getRecyclerView().setVerticalScrollBarEnabled(false);
 
         PagerAdapter mPagerAdapter = new PagerAdapter(getSupportFragmentManager());
-        mPagerAdapter.addFragment(FeaturedFragment.newInstance("latest"), "Featured");
-        mPagerAdapter.addFragment(NewFragment.newInstance("latest"), "New");
-        mPagerAdapter.addFragment(CollectionFragment.newInstance("Featured"), "Collections");
+        mPagerAdapter.addFragment(NewFragment.newInstance("latest"), getString(R.string.main_new));
+        mPagerAdapter.addFragment(FeaturedFragment.newInstance("latest"), getString(R.string.main_featured));
+        mPagerAdapter.addFragment(CollectionFragment.newInstance("Featured"), getString(R.string.main_collections));
         mViewPager.setAdapter(mPagerAdapter);
         mViewPager.setOffscreenPageLimit(2);
 
@@ -206,8 +222,16 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
         fabUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Uri uri = Uri.parse(Resplash.UNSPLASH_UPLOAD_URL);
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                try {
+                    Uri uri = Uri.parse(Resplash.UNSPLASH_UPLOAD_URL);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    if (intent.resolveActivity(getPackageManager()) != null)
+                        startActivity(intent);
+                    else
+                        Toast.makeText(getApplicationContext(), getString(R.string.error), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -226,8 +250,10 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
                 }else if(drawerItem.getIdentifier() == 3){
                     mViewPager.setCurrentItem(2);
                 }else if(drawerItem.getIdentifier() == 4){
-                    intent = new Intent(MainActivity.this, SettingsActivity.class);
+                    intent = new Intent(MainActivity.this, DonateActivity.class);
                 }else if(drawerItem.getIdentifier() == 5){
+                    intent = new Intent(MainActivity.this, SettingsActivity.class);
+                }else if(drawerItem.getIdentifier() == 6){
                     intent = new Intent(MainActivity.this, AboutActivity.class);
                 }else if(drawerItem.getIdentifier() == 100000){
                     intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -242,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
                 }else if(drawerItem.getIdentifier() == 100003){
                     AuthManager.getInstance().logout();
                     updateDrawerItems();
-                    Toast.makeText(getApplicationContext(), "Logout - Success", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.main_logout_success), Toast.LENGTH_SHORT).show();
                 }
 
                 if (intent != null) {
@@ -277,23 +303,23 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
 
         switch (mViewPager.getCurrentItem()){
             case 0:
-                mItemFeaturedLatest.setVisible(true);
-                mItemFeaturedOldest.setVisible(true);
-                mItemFeaturedPopular.setVisible(true);
-                mItemNewLatest.setVisible(false);
-                mItemNewOldest.setVisible(false);
-                mItemNewPopular.setVisible(false);
-                mItemAll.setVisible(false);
-                mItemCurated.setVisible(false);
-                mItemFeatured.setVisible(false);
-                break;
-            case 1:
                 mItemFeaturedLatest.setVisible(false);
                 mItemFeaturedOldest.setVisible(false);
                 mItemFeaturedPopular.setVisible(false);
                 mItemNewLatest.setVisible(true);
                 mItemNewOldest.setVisible(true);
                 mItemNewPopular.setVisible(true);
+                mItemAll.setVisible(false);
+                mItemCurated.setVisible(false);
+                mItemFeatured.setVisible(false);
+                break;
+            case 1:
+                mItemFeaturedLatest.setVisible(true);
+                mItemFeaturedOldest.setVisible(true);
+                mItemFeaturedPopular.setVisible(true);
+                mItemNewLatest.setVisible(false);
+                mItemNewOldest.setVisible(false);
+                mItemNewPopular.setVisible(false);
                 mItemAll.setVisible(false);
                 mItemCurated.setVisible(false);
                 mItemFeatured.setVisible(false);
@@ -389,34 +415,6 @@ public class MainActivity extends AppCompatActivity implements AuthManager.OnAut
             drawer.closeDrawer();
         } else {
             super.onBackPressed();
-        }
-    }
-
-    public  boolean isStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG,"Permission is granted");
-                return true;
-            } else {
-
-                Log.v(TAG,"Permission is revoked");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                return false;
-            }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG,"Permission is granted");
-            return true;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
-            Log.v(TAG,"Permission: "+permissions[0]+ "was "+grantResults[0]);
-            //resume tasks needing this permission
         }
     }
 

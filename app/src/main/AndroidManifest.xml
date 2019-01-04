@@ -8,9 +8,9 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <uses-feature android:name="android.hardware.screen.portrait" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
         android:name=".Resplash"
@@ -18,26 +18,37 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="false"
-        android:theme="@style/AppTheme"
+        android:largeHeap="true"
+        android:theme="@style/ResplashTheme.Primary.Base.Light"
         tools:replace="android:supportsRtl">
         <activity
             android:name=".activities.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/MainActivityThemeLight">
+            <intent-filter>
+                <data
+                    android:scheme="https"
+                    android:host="unsplash.com"
+                    android:path="/" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".activities.SettingsActivity"
-            android:label="Settings"
-            android:parentActivityName=".activities.MainActivity">
+            android:label="@string/main_settings"
+            android:configChanges="locale"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/SettingsActivityThemeLight">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.SettingsActivity" />
         </activity>
         <activity
             android:name=".activities.SplashActivity"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/SplashActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -45,50 +56,73 @@
         </activity>
         <activity
             android:name=".activities.DetailActivity"
-            android:label=""
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:label="@string/app_name"
+            android:theme="@style/DetailActivityThemeLight">
+        </activity>
         <activity
             android:name=".activities.SearchActivity"
             android:label=""
             android:parentActivityName=".activities.MainActivity"
-            android:screenOrientation="portrait">
+            android:theme="@style/SearchActivityThemeLight">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.SearchActivity" />
         </activity>
         <activity
             android:name=".activities.CollectionDetailActivity"
-            android:screenOrientation="portrait" />
-        <activity android:name=".activities.PreviewActivity" />
-        <activity
-            android:name=".activities.IntroActivity"
-            android:screenOrientation="portrait" />
+            android:theme="@style/CollectionDetailActivityThemeLight"
+            android:label="@string/app_name">
+        </activity>
+        <activity android:name=".activities.PreviewActivity"
+            android:theme="@style/PreviewActivityThemeLight"/>
+        <activity android:name=".activities.IntroActivity"
+            android:theme="@style/IntroActivityThemeLight"/>
         <activity
             android:name=".activities.UserActivity"
-            android:screenOrientation="portrait" />
+            android:theme="@style/UserActivityThemeLight"
+            android:label="@string/app_name">
+        </activity>
         <activity
             android:name=".activities.LoginActivity"
+            android:theme="@style/LoginActivityThemeLight"
             android:launchMode="singleInstance">
             <intent-filter>
                 <data
-                    android:scheme="resplash"
-                    android:host="unsplash-auth-callback" />
+                    android:host="unsplash-auth-callback"
+                    android:scheme="resplash" />
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.AboutActivity"></activity>
-        <activity android:name=".activities.EditProfileActivity"></activity>
+        <activity android:name=".activities.AboutActivity"
+            android:theme="@style/AboutActivityThemeLight"/>
+        <activity android:name=".activities.EditProfileActivity"
+            android:theme="@style/EditProfileActivityThemeLight"/>
+        <activity android:name=".activities.CustomApiKeyActivity"
+            android:theme="@style/CustomApiActivityThemeLight">
+            <intent-filter>
+                <action android:name="CustomApiKeyActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activities.DonateActivity"
+            android:theme="@style/DonateActivityThemeLight"/>
+
         <provider
-            android:name="android.support.v4.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.b_lam.resplash.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/fileprovider" />
         </provider>
+
+        <meta-data android:name="com.google.android.backup.api_key"
+            android:value="AEdPqrEAAAAIDEYkpmJmsiQ-I__T0lFHPG64bCYUXblnA0iBRQ" />
+
     </application>
 
 </manifest>

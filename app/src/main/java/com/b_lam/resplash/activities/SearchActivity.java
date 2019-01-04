@@ -1,18 +1,18 @@
 package com.b_lam.resplash.activities;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import com.google.android.material.tabs.TabLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
@@ -35,6 +35,8 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.b_lam.resplash.R;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
 
 public class SearchActivity extends AppCompatActivity implements EditText.OnEditorActionListener{
 
@@ -48,22 +50,36 @@ public class SearchActivity extends AppCompatActivity implements EditText.OnEdit
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.SearchActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.SearchActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_search);
 
         ButterKnife.bind(this);
 
         Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_material, getTheme());
-        upArrow.setColorFilter(Color.parseColor("#000000"), PorterDuff.Mode.SRC_ATOP);
+        upArrow.setColorFilter(ThemeUtils.getThemeAttrColor(this, R.attr.menuIconColor), PorterDuff.Mode.SRC_ATOP);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         PagerAdapter mPagerAdapter = new PagerAdapter(getSupportFragmentManager());
-        mPagerAdapter.addFragment(SearchPhotoFragment.newInstance(null), "Photos");
-        mPagerAdapter.addFragment(SearchCollectionFragment.newInstance(null), "Collections");
-        mPagerAdapter.addFragment(SearchUserFragment.newInstance(null), "Users");
+        mPagerAdapter.addFragment(SearchPhotoFragment.newInstance(null), getString(R.string.search_photos));
+        mPagerAdapter.addFragment(SearchCollectionFragment.newInstance(null), getString(R.string.search_collections));
+        mPagerAdapter.addFragment(SearchUserFragment.newInstance(null), getString(R.string.search_users));
         mViewPager.setAdapter(mPagerAdapter);
         mViewPager.setOffscreenPageLimit(2);
         mTabLayout.setupWithViewPager(mViewPager);
@@ -148,10 +164,12 @@ public class SearchActivity extends AppCompatActivity implements EditText.OnEdit
 
         @Override
         public void afterTextChanged(Editable editable) {
-            if(mEditText.getText().toString().equals("")){
-                mActionClear.setVisible(false);
-            }else {
-                mActionClear.setVisible(true);
+            if(mActionClear != null) {
+                if (mEditText.getText().toString().equals("")) {
+                    mActionClear.setVisible(false);
+                } else {
+                    mActionClear.setVisible(true);
+                }
             }
         }
     };

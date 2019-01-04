@@ -9,24 +9,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/colorPrimary">
+        android:background="?attr/colorPrimary">
 
         <ImageView
             android:id="@+id/item_collection_img"
             android:layout_width="fill_parent"
             android:layout_height="0dp"
+            android:maxHeight="250dp"
             android:layout_weight="1"
             android:adjustViewBounds="true"
             android:transitionName="imageCover"
-            android:scaleType="fitXY"
-            android:background="@color/colorPrimary"/>
+            android:scaleType="centerCrop"
+            android:background="?attr/colorPrimary"/>
 
         <FrameLayout
             android:id="@+id/item_image_text_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:background="@color/colorPrimary">
+            android:background="?attr/colorPrimary">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -42,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:textColor="@color/colorText"
+                    android:textColor="?attr/primaryTextColor"
                     android:lines="1"
                     android:ellipsize="end"
                     android:textSize="16sp" />
@@ -52,7 +53,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:textColor="@color/colorText"
+                    android:textColor="?attr/primaryTextColor"
                     android:lines="1"
                     android:ellipsize="end"
                     android:textSize="13sp" />

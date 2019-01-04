@@ -5,36 +5,38 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/item_collection_card">
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:cardUseCompatPadding="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        app:cardCornerRadius="5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@color/colorPrimary">
+            android:background="?attr/cardBackgroundColor">
 
             <ImageView
                 android:id="@+id/item_collection_card_img"
                 android:layout_width="fill_parent"
                 android:layout_height="0dp"
+                android:maxHeight="250dp"
                 android:layout_weight="1"
                 android:adjustViewBounds="true"
                 android:transitionName="imageCover"
-                android:scaleType="fitXY"
-                android:background="@color/colorPrimary"/>
+                android:scaleType="centerCrop"
+                android:background="?attr/cardBackgroundColor"/>
 
             <FrameLayout
                 android:id="@+id/item_image_text_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:background="@color/colorPrimary">
+                android:background="?attr/cardBackgroundColor">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -50,7 +52,7 @@
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:textColor="@color/colorText"
+                        android:textColor="?attr/primaryTextColor"
                         android:lines="1"
                         android:ellipsize="end"
                         android:textSize="16sp" />
@@ -60,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:textColor="@color/colorText"
+                        android:textColor="?attr/primaryTextColor"
                         android:lines="1"
                         android:ellipsize="end"
                         android:textSize="13sp" />
@@ -68,6 +70,6 @@
                 </LinearLayout>
             </FrameLayout>
         </LinearLayout>
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
 </FrameLayout>

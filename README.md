@@ -1,35 +1,38 @@
-#[Resplash]
+# [Resplash]
 
 <img src="https://github.com/b-lam/Resplash/blob/develop/design/Play%20Store/Resplash_Play_Store_Banner.jpg?raw=true" width="750">
 
 **[Resplash]** is powered by [Unsplash.com](https://unsplash.com/)
 
+Beautiful, free photos.
+Gifted by the world’s most generous community of photographers.
+
 * Browse 100000+ high-res photos
+* New photos everyday
 * Material design
+* Dark and black (AMOLED) theme
 * Download raw photos
 * Set as wallpaper straight from the app
 * View user profiles, curated collections, photo stats and exif data
-* Login to like photos and update your profile
+* Log in to like photos and update your profile
 * Various layout options
 
-#Download
+# Download
 
 <a href="https://play.google.com/store/apps/details?id=com.b_lam.resplash" target="_blank">
 <img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="70"/></a>
 
-#Screenshots
+# Screenshots
 
-<img src="https://b-lam.github.io/img/portfolio/resplash-screenshot-1.png" width="250">
-<img src="https://b-lam.github.io/img/portfolio/resplash-screenshot-2.png" width="250">
-<img src="https://b-lam.github.io/img/portfolio/resplash-screenshot-4.png" width="250">
+<img src="https://b-lam.github.io/img/resplash/resplash-1.png" width="250"> <img src="https://b-lam.github.io/img/resplash/resplash-2.png" width="250"> <img src="https://b-lam.github.io/img/resplash/resplash-3.png" width="250">
 
-#Developed By
+# Developed By
 
 * Brandon Lam 
- * [b-lam.github.io](http://b-lam.github.io)
+ * [b-lam.github.io](https://b-lam.github.io)
  * [instagram.com/brandon.c.lam](https://www.instagram.com/brandon.c.lam/)
 
-#License
+# License
 
 	MIT License
 

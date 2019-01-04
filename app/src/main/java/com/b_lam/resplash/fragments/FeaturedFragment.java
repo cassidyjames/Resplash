@@ -2,36 +2,30 @@ package com.b_lam.resplash.fragments;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.util.Pair;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.b_lam.resplash.Resplash;
 import com.b_lam.resplash.activities.DetailActivity;
-import com.b_lam.resplash.activities.MainActivity;
 import com.b_lam.resplash.data.data.Photo;
 import com.b_lam.resplash.data.service.PhotoService;
 import com.google.gson.Gson;
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.adapters.FooterAdapter;
+import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.fastadapter_extensions.items.ProgressItem;
 import com.mikepenz.fastadapter_extensions.scroll.EndlessRecyclerOnScrollListener;
 
@@ -56,7 +50,7 @@ public class FeaturedFragment extends Fragment{
     private SwipeRefreshLayout mSwipeContainer;
     private ProgressBar mImagesProgress;
     private ErrorView mImagesErrorView;
-    private FooterAdapter<ProgressItem> mFooterAdapter;
+    private ItemAdapter mFooterAdapter;
     private int mPage, mColumns;
     private String mSort;
     private SharedPreferences sharedPreferences;
@@ -88,7 +82,6 @@ public class FeaturedFragment extends Fragment{
         }else{
             mColumns = 2;
         }
-
         mService = PhotoService.getService();
     }
 
@@ -111,14 +104,16 @@ public class FeaturedFragment extends Fragment{
                 return false;
             }
         });
-        mImageRecycler.setItemViewCacheSize(20);
+        mImageRecycler.setItemViewCacheSize(5);
         mPhotoAdapter = new FastItemAdapter<>();
 
         mPhotoAdapter.withOnClickListener(onClickListener);
 
-        mFooterAdapter = new FooterAdapter<>();
+        mFooterAdapter = new ItemAdapter();
 
-        mImageRecycler.setAdapter(mFooterAdapter.wrap(mPhotoAdapter));
+        mPhotoAdapter.addAdapter(1, mFooterAdapter);
+
+        mImageRecycler.setAdapter(mPhotoAdapter);
 
         mImageRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -154,17 +149,17 @@ public class FeaturedFragment extends Fragment{
         }
     }
 
-    private FastAdapter.OnClickListener<Photo> onClickListener = new FastAdapter.OnClickListener<Photo>(){
+    private OnClickListener<Photo> onClickListener = new OnClickListener<Photo>(){
         @Override
         public boolean onClick(View v, IAdapter<Photo> adapter, Photo item, int position) {
-            Intent i = new Intent(getContext(), DetailActivity.class);
+            final Intent i = new Intent(getContext(), DetailActivity.class);
             i.putExtra("Photo", new Gson().toJson(item));
 
             String layout = sharedPreferences.getString("item_layout", "List");
 
             ImageView imageView;
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP || sharedPreferences.getString("item_layout", "List").equals("Grid")) {
+            if (layout.equals("Grid")) {
                 startActivity(i);
             } else if (layout.equals("Cards")) {
                 imageView = (ImageView) v.findViewById(R.id.item_image_card_img);
@@ -187,9 +182,6 @@ public class FeaturedFragment extends Fragment{
 //                startActivity(i, options.toBundle());
                 startActivity(i);
             }
-
-
-
             return false;
         }
     };
@@ -231,7 +223,7 @@ public class FeaturedFragment extends Fragment{
             @Override
             public void onRequestPhotosFailed(Call<List<Photo>> call, Throwable t) {
                 Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
+                mImagesErrorView.setRetryVisible(false);
                 mImagesErrorView.setTitle(R.string.error_network);
                 mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
                 mImagesProgress.setVisibility(View.GONE);
@@ -273,7 +265,7 @@ public class FeaturedFragment extends Fragment{
                     mImagesErrorView.setVisibility(View.VISIBLE);
                 }
                 if(mSwipeContainer.isRefreshing()) {
-                    Toast.makeText(getContext(), "Updated images!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.updated_photos), Toast.LENGTH_SHORT).show();
                     mSwipeContainer.setRefreshing(false);
                 }
             }
@@ -281,7 +273,7 @@ public class FeaturedFragment extends Fragment{
             @Override
             public void onRequestPhotosFailed(Call<List<Photo>> call, Throwable t) {
                 Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
+                mImagesErrorView.setRetryVisible(false);
                 mImagesErrorView.setTitle(R.string.error_network);
                 mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
                 mImagesProgress.setVisibility(View.GONE);

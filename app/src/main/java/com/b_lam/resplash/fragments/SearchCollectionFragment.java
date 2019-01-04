@@ -2,10 +2,10 @@ package com.b_lam.resplash.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -20,10 +20,10 @@ import com.b_lam.resplash.data.data.Collection;
 import com.b_lam.resplash.data.data.SearchCollectionsResult;
 import com.b_lam.resplash.data.service.SearchService;
 import com.google.gson.Gson;
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.adapters.FooterAdapter;
+import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.fastadapter_extensions.items.ProgressItem;
 import com.mikepenz.fastadapter_extensions.scroll.EndlessRecyclerOnScrollListener;
 
@@ -48,7 +48,7 @@ public class SearchCollectionFragment extends Fragment {
     private ProgressBar mImagesProgress;
     private ErrorView mImagesErrorView;
     private TextView mNoResultTextView;
-    private FooterAdapter<ProgressItem> mFooterAdapter;
+    private ItemAdapter mFooterAdapter;
     private int mPage;
     private String mQuery;
 
@@ -99,14 +99,16 @@ public class SearchCollectionFragment extends Fragment {
                 return false;
             }
         });
-        mImageRecycler.setItemViewCacheSize(20);
+        mImageRecycler.setItemViewCacheSize(5);
         mCollectionAdapter = new FastItemAdapter<>();
 
         mCollectionAdapter.withOnClickListener(onClickListener);
 
-        mFooterAdapter = new FooterAdapter<>();
+        mFooterAdapter = new ItemAdapter();
 
-        mImageRecycler.setAdapter(mFooterAdapter.wrap(mCollectionAdapter));
+        mCollectionAdapter.addAdapter(1, mFooterAdapter);
+
+        mImageRecycler.setAdapter(mCollectionAdapter);
 
         mImageRecycler.addOnScrollListener(new EndlessRecyclerOnScrollListener(mFooterAdapter) {
             @Override
@@ -136,7 +138,7 @@ public class SearchCollectionFragment extends Fragment {
         }
     }
 
-    private FastAdapter.OnClickListener<Collection> onClickListener = new FastAdapter.OnClickListener<Collection>(){
+    private OnClickListener<Collection> onClickListener = new OnClickListener<Collection>(){
         @Override
         public boolean onClick(View v, IAdapter<Collection> adapter, Collection item, int position) {
             Intent i = new Intent(getContext(), CollectionDetailActivity.class);
@@ -186,7 +188,7 @@ public class SearchCollectionFragment extends Fragment {
             @Override
             public void onRequestCollectionsFailed(Call<SearchCollectionsResult> call, Throwable t) {
                 Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
+                mImagesErrorView.setRetryVisible(false);
                 mImagesErrorView.setTitle(R.string.error_network);
                 mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
                 mImagesProgress.setVisibility(View.GONE);
@@ -237,7 +239,7 @@ public class SearchCollectionFragment extends Fragment {
                     mImagesErrorView.setVisibility(View.VISIBLE);
                 }
                 if(mSwipeContainer.isRefreshing()) {
-                    Toast.makeText(getContext(), "Updated collections!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.updated_collections), Toast.LENGTH_SHORT).show();
                     mSwipeContainer.setRefreshing(false);
                 }
             }
@@ -245,7 +247,7 @@ public class SearchCollectionFragment extends Fragment {
             @Override
             public void onRequestCollectionsFailed(Call<SearchCollectionsResult> call, Throwable t) {
                 Log.d(TAG, t.toString());
-                mImagesErrorView.showRetryButton(false);
+                mImagesErrorView.setRetryVisible(false);
                 mImagesErrorView.setTitle(R.string.error_network);
                 mImagesErrorView.setSubtitle(R.string.error_network_subtitle);
                 mImagesProgress.setVisibility(View.GONE);

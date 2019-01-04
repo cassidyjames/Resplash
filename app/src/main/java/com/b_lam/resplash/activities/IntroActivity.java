@@ -2,9 +2,6 @@ package com.b_lam.resplash.activities;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,24 +11,43 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.pixelcan.inkpageindicator.InkPageIndicator;
+import com.b_lam.resplash.R;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
+import com.rd.PageIndicatorView;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import com.b_lam.resplash.R;
 
 public class IntroActivity extends AppCompatActivity implements View.OnClickListener, ViewPager.OnPageChangeListener{
 
     @BindView(R.id.activity_intro_btnClose) ImageButton btnClose;
     @BindView(R.id.activity_intro_button) Button btnNext;
     @BindView(R.id.activity_intro_viewPager) ViewPager mViewPager;
-    @BindView(R.id.activity_intro_indicator) InkPageIndicator mIndicator;
+    @BindView(R.id.activity_intro_indicator) PageIndicatorView mIndicator;
 
     private IntroPagerAdapter mIntroPagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.IntroActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.IntroActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_intro);
 
         ButterKnife.bind(this);

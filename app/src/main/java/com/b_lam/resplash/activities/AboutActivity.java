@@ -1,20 +1,23 @@
 package com.b_lam.resplash.activities;
 
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.view.LayoutInflaterCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
-import com.mikepenz.iconics.context.IconicsLayoutInflater;
+import com.b_lam.resplash.Resplash;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -23,17 +26,31 @@ import com.b_lam.resplash.R;
 public class AboutActivity extends AppCompatActivity implements View.OnClickListener {
 
     @BindView(R.id.toolbar_about) Toolbar mToolbar;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        LayoutInflaterCompat.setFactory(getLayoutInflater(), new IconicsLayoutInflater(getDelegate()));
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.AboutActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.AboutActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_about);
 
         ButterKnife.bind(this);
 
         Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_material, getTheme());
-        upArrow.setColorFilter(Color.parseColor("#000000"), PorterDuff.Mode.SRC_ATOP);
+        upArrow.setColorFilter(ThemeUtils.getThemeAttrColor(this, R.attr.menuIconColor), PorterDuff.Mode.SRC_ATOP);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -43,10 +60,12 @@ public class AboutActivity extends AppCompatActivity implements View.OnClickList
         LinearLayout [] containers = new LinearLayout[] {
                 (LinearLayout) findViewById(R.id.container_about_unsplash),
                 (LinearLayout) findViewById(R.id.container_about_app),
-                (LinearLayout) findViewById(R.id.container_about_version),
-                (LinearLayout) findViewById(R.id.container_about_changelog),
                 (LinearLayout) findViewById(R.id.container_about_intro),
                 (LinearLayout) findViewById(R.id.container_about_github),
+                (LinearLayout) findViewById(R.id.container_about_privacy_policy),
+                (LinearLayout) findViewById(R.id.container_about_rate),
+                (LinearLayout) findViewById(R.id.container_about_donate),
+                (LinearLayout) findViewById(R.id.container_about_bug),
                 (LinearLayout) findViewById(R.id.container_about_author),
                 (LinearLayout) findViewById(R.id.container_about_website),
                 (LinearLayout) findViewById(R.id.container_about_instagram),
@@ -63,6 +82,17 @@ public class AboutActivity extends AppCompatActivity implements View.OnClickList
         for (LinearLayout r : containers) {
             r.setOnClickListener(this);
         }
+
+        PackageManager manager = getApplicationContext().getPackageManager();
+
+        try {
+            PackageInfo info = manager.getPackageInfo(getApplicationContext().getPackageName(), 0);
+        }catch (PackageManager.NameNotFoundException e){
+           return;
+        }
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        mFirebaseAnalytics.logEvent(Resplash.FIREBASE_EVENT_VIEW_ABOUT, null);
     }
 
     @Override
@@ -80,15 +110,7 @@ public class AboutActivity extends AppCompatActivity implements View.OnClickList
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.container_about_unsplash:
-                goToURL("https://unsplash.com/");
-                break;
-
-            case R.id.container_about_changelog:
-                new AlertDialog.Builder(AboutActivity.this)
-                        .setTitle("Changelog")
-                        .setMessage(getString(R.string.changelog))
-                        .setPositiveButton("Ok", null)
-                        .show();
+                goToURL("https://unsplash.com/" + Resplash.UNSPLASH_UTM_PARAMETERS);
                 break;
 
             case R.id.container_about_intro:
@@ -97,6 +119,23 @@ public class AboutActivity extends AppCompatActivity implements View.OnClickList
 
             case R.id.container_about_github:
                 goToURL("https://github.com/b-lam/Resplash");
+                break;
+
+            case R.id.container_about_privacy_policy:
+                goToURL("https://b-lam.github.io/projects/resplash/privacy_policy");
+                break;
+
+            case R.id.container_about_rate:
+                mFirebaseAnalytics.logEvent(Resplash.FIREBASE_EVENT_RATE_FROM_APP, null);
+                goToURL("https://play.google.com/store/apps/details?id=com.b_lam.resplash");
+                break;
+
+            case R.id.container_about_donate:
+                startActivity(new Intent(AboutActivity.this, DonateActivity.class));
+                break;
+
+            case R.id.container_about_bug:
+                goToURL("https://github.com/b-lam/Resplash/issues");
                 break;
 
             case R.id.container_about_website:
@@ -151,6 +190,10 @@ public class AboutActivity extends AppCompatActivity implements View.OnClickList
 
     public void goToURL(String link) {
         Uri uri = Uri.parse(link);
-        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        if (intent.resolveActivity(getPackageManager()) != null)
+            startActivity(intent);
+        else
+            Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show();
     }
 }

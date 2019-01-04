@@ -1,16 +1,19 @@
 package com.b_lam.resplash.activities;
 
-import android.graphics.Color;
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import com.google.android.material.tabs.TabLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -25,6 +28,8 @@ import com.b_lam.resplash.data.service.UserService;
 import com.b_lam.resplash.fragments.UserCollectionFragment;
 import com.b_lam.resplash.fragments.UserLikesFragment;
 import com.b_lam.resplash.fragments.UserPhotoFragment;
+import com.b_lam.resplash.util.LocaleUtils;
+import com.b_lam.resplash.util.ThemeUtils;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
@@ -56,7 +61,21 @@ public class UserActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        switch (ThemeUtils.getTheme(this)) {
+            case ThemeUtils.Theme.DARK:
+                setTheme(R.style.UserActivityThemeDark);
+                break;
+            case ThemeUtils.Theme.BLACK:
+                setTheme(R.style.UserActivityThemeBlack);
+                break;
+        }
+
         super.onCreate(savedInstanceState);
+
+        LocaleUtils.loadLocale(this);
+
+        ThemeUtils.setRecentAppsHeaderColor(this);
+
         setContentView(R.layout.activity_user);
 
         ButterKnife.bind(this);
@@ -73,7 +92,7 @@ public class UserActivity extends AppCompatActivity {
 
         setSupportActionBar(mToolbar);
         Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_material, getTheme());
-        upArrow.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+        upArrow.setColorFilter(ThemeUtils.getThemeAttrColor(this, R.attr.menuIconColor), PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -84,7 +103,7 @@ public class UserActivity extends AppCompatActivity {
             public void onRequestUserProfileSuccess(Call<User> call, Response<User> response) {
                 if(response.isSuccessful()){
                     mUser = response.body();
-                    tvUserLocation.setText(mUser.location != null ? mUser.location : "Unknown");
+                    tvUserLocation.setText(mUser.location != null ? mUser.location : getString(R.string.unknown));
                     if(mUser.portfolio_url != null) {
                         tvUserPortfolioUrl.setText(mUser.portfolio_url);
                         tvUserPortfolioUrl.setVisibility(View.VISIBLE);
@@ -115,28 +134,40 @@ public class UserActivity extends AppCompatActivity {
                     userCollectionFragment.setUser(mUser);
 
                     mPagerAdapter = new PagerAdapter(getSupportFragmentManager());
-                    mPagerAdapter.addFragment(userPhotoFragment, mUser.total_photos + " Photos");
-                    mPagerAdapter.addFragment(userLikesFragment, mUser.total_likes + " Likes");
-                    mPagerAdapter.addFragment(userCollectionFragment, mUser.total_collections + " Collections");
+                    mPagerAdapter.addFragment(userPhotoFragment, getString(R.string.photos, String.valueOf(mUser.total_photos)));
+                    mPagerAdapter.addFragment(userLikesFragment, getString(R.string.likes, String.valueOf(mUser.total_likes)));
+                    mPagerAdapter.addFragment(userCollectionFragment, mUser.total_collections + " " + getString(R.string.main_collections));
 
                     mViewPager.setAdapter(mPagerAdapter);
                     mViewPager.setOffscreenPageLimit(2);
                     mTabLayout.setupWithViewPager(mViewPager);
 
                 } else if (response.code() == 403) {
-                    Toast.makeText(Resplash.getInstance().getApplicationContext(), "Can't make anymore requests.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(Resplash.getInstance().getApplicationContext(), getString(R.string.cannot_make_anymore_requests), Toast.LENGTH_LONG).show();
                 } else {
-                    mUserService.requestUserProfile(username, this);
+                    if(username != null) {
+                        mUserService.requestUserProfile(username, this);
+                    }
                 }
             }
 
             @Override
             public void onRequestUserProfileFailed(Call<User> call, Throwable t) {
-                mUserService.requestUserProfile(username, this);
+                if(username != null) {
+                    mUserService.requestUserProfile(username, this);
+                }
             }
         };
 
-        mUserService.requestUserProfile(username, onRequestUserProfileListener);
+        if(username != null) {
+            mUserService.requestUserProfile(username, onRequestUserProfileListener);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.user, menu);
+        return true;
     }
 
     @Override
@@ -144,6 +175,17 @@ public class UserActivity extends AppCompatActivity {
         switch (item.getItemId()){
             case android.R.id.home:
                 supportFinishAfterTransition();
+                return true;
+            case R.id.action_view_on_unsplash:
+                if (mUser != null && mUser.links != null && mUser.links.html != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mUser.links.html + Resplash.UNSPLASH_UTM_PARAMETERS));
+                    if (intent.resolveActivity(getPackageManager()) != null)
+                        startActivity(intent);
+                    else
+                        Toast.makeText(this, getString(R.string.error), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(UserActivity.this, getString(R.string.error), Toast.LENGTH_SHORT).show();
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -157,7 +199,6 @@ public class UserActivity extends AppCompatActivity {
             mUserService.cancel();
         }
     }
-
 
     class PagerAdapter extends FragmentPagerAdapter {
 

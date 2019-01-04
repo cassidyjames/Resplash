@@ -1,36 +1,24 @@
 package com.b_lam.resplash.data.data;
 
-import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.ColorUtils;
-import android.support.v4.util.Pair;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.b_lam.resplash.Resplash;
-import com.b_lam.resplash.activities.DetailActivity;
-import com.b_lam.resplash.activities.MainActivity;
+import com.b_lam.resplash.util.ThemeUtils;
+import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.animation.ViewPropertyAnimation;
-import com.google.gson.Gson;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.transition.ViewPropertyTransition;
 import com.mikepenz.fastadapter.items.AbstractItem;
-import com.mikepenz.fastadapter.utils.ViewHolderFactory;
-
 import java.util.List;
-
 import com.b_lam.resplash.R;
 
 /**
@@ -146,6 +134,7 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
         public String self;
         public String html;
         public String download;
+        public String download_location;
     }
 
     public static class CurrentUserCollections {
@@ -272,6 +261,7 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
                 public String self;
                 public String html;
                 public String download;
+                public String download_location;
             }
 
             public static class Categories {
@@ -349,7 +339,7 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
             case "Grid":
                 return R.id.item_image_grid;
             default:
-                throw new IllegalArgumentException("Invalid item layout");
+                return R.id.item_image;
         }
     }
 
@@ -365,7 +355,7 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
             case "Grid":
                 return R.layout.item_image_grid;
             default:
-                throw new IllegalArgumentException("Invalid item layout");
+                return R.layout.item_image;
         }
     }
 
@@ -373,40 +363,40 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
     public void bindView(final Photo.ViewHolder holder, List payloads) {
         super.bindView(holder, payloads);
 
-        String url;
+        String url = "";
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Resplash.getInstance());
 
-        switch (sharedPreferences.getString("load_quality", "Regular")){
-            case "Raw":
-                url = this.urls.raw;
-                break;
-            case "Full":
-                url = this.urls.full;
-                break;
-            case "Regular":
-                url = this.urls.regular;
-                break;
-            case "Small":
-                url = this.urls.small;
-                break;
-            case "Thumb":
-                url = this.urls.thumb;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid download quality");
+        if (this.urls != null) {
+            switch (sharedPreferences.getString("load_quality", "Regular")) {
+                case "Raw":
+                    url = this.urls.raw;
+                    break;
+                case "Full":
+                    url = this.urls.full;
+                    break;
+                case "Regular":
+                    url = this.urls.regular;
+                    break;
+                case "Small":
+                    url = this.urls.small;
+                    break;
+                case "Thumb":
+                    url = this.urls.thumb;
+                    break;
+                default:
+                    url = this.urls.regular;
+            }
         }
 
         DisplayMetrics displaymetrics = Resplash.getInstance().getResources().getDisplayMetrics();
         float finalHeight = displaymetrics.widthPixels / ((float)width/(float)height);
 
-        ViewPropertyAnimation.Animator fadeAnimation = new ViewPropertyAnimation.Animator() {
+        ViewPropertyTransition.Animator fadeAnimation = new ViewPropertyTransition.Animator() {
             @Override
             public void animate(View view) {
-                ObjectAnimator fadeInAnim = ObjectAnimator.ofFloat(view, "alpha", 0.75f, 1f).setDuration(500);
-                ObjectAnimator fadeOutAnim = ObjectAnimator.ofFloat(view, "alpha" , 1f, 0f).setDuration(500);
-                AnimatorSet animatorSet = new AnimatorSet();
-                animatorSet.playSequentially(fadeInAnim);
-                animatorSet.start();
+                ObjectAnimator fadeAnim = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f);
+                fadeAnim.setDuration(500);
+                fadeAnim.start();
             }
         };
 
@@ -414,17 +404,20 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
             case "List":
                 Glide.with(holder.itemView.getContext())
                         .load(url)
-                        .animate(fadeAnimation)
-                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .transition(GenericTransitionOptions.with(fadeAnimation))
                         .into(holder.imageList);
 
                 holder.imageList.setMinimumHeight((int) finalHeight);
-                int colorFrom = Color.WHITE;
-                int colorTo = Color.parseColor(this.color);
+                int colorFrom = ThemeUtils.getThemeAttrColor(holder.itemView.getContext(), R.attr.colorPrimary);
+                int colorTo;
+                if(this.color != null){
+                    colorTo = Color.parseColor(this.color);
+                }else{
+                    colorTo = colorFrom;
+                }
                 ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
                 colorAnimation.setDuration(1000);
                 colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
                     @Override
                     public void onAnimationUpdate(ValueAnimator animator) {
                         holder.imageList.setBackgroundColor((int) animator.getAnimatedValue());
@@ -436,24 +429,25 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
             case "Cards":
                 Glide.with(holder.itemView.getContext())
                         .load(url)
-                        .animate(fadeAnimation)
-                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
+                        .transition(GenericTransitionOptions.with(fadeAnimation))
                         .into(holder.imageCard);
 
                 holder.imageCard.setMinimumHeight((int) finalHeight);
-                holder.authorCard.setText("By " + this.user.name);
+                holder.authorCard.setText(Resplash.getInstance().getResources().getString(R.string.by_author, this.user.name));
                 break;
             case "Grid":
                 Glide.with(holder.itemView.getContext())
                         .load(url)
-                        .animate(fadeAnimation)
-                        .diskCacheStrategy(DiskCacheStrategy.RESULT)
-                        .centerCrop()
+                        .transition(GenericTransitionOptions.with(fadeAnimation))
+                        .apply(new RequestOptions().centerCrop())
                         .into(holder.imageGrid);
                 break;
-            default:
-                throw new IllegalArgumentException("Invalid item layout");
         }
+    }
+
+    @Override
+    public ViewHolder getViewHolder(View v) {
+        return new ViewHolder(v);
     }
 
     // Manually create the ViewHolder class
@@ -478,33 +472,7 @@ public class Photo extends AbstractItem<Photo, Photo.ViewHolder>  {
                 case "Grid":
                     imageGrid = (ImageView) itemView.findViewById(R.id.item_image_grid_img);
                     break;
-                default:
-                    throw new IllegalArgumentException("Invalid item layout");
             }
         }
-    }
-
-    //the static ViewHolderFactory which will be used to generate the ViewHolder for this Item
-    private static final ViewHolderFactory<? extends Photo.ViewHolder> FACTORY = new Photo.ItemFactory();
-
-    /**
-     * our ItemFactory implementation which creates the ViewHolder for our adapter.
-     * It is highly recommended to implement a ViewHolderFactory as it is 0-1ms faster for ViewHolder creation,
-     * and it is also many many times more efficient if you define custom listeners on views within your item.
-     */
-    protected static class ItemFactory implements ViewHolderFactory<Photo.ViewHolder> {
-        public Photo.ViewHolder create(View v) {
-            return new Photo.ViewHolder(v);
-        }
-    }
-
-    /**
-     * return our ViewHolderFactory implementation here
-     *
-     * @return
-     */
-    @Override
-    public ViewHolderFactory<? extends Photo.ViewHolder> getFactory() {
-        return FACTORY;
     }
 }
